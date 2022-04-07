@@ -17,7 +17,7 @@ that are needed for building Glean.
 ## You will need
 
 * Linux. The build is only tested on Linux so far; we hope to add
-  support for other OSs in the future.
+  support for other OSs in the future. We build on x86\_64 and arm64v8.
 
 * [GHC](https://www.haskell.org/ghc/). To see which versions Glean is tested with, check the current [ci.yml](https://github.com/facebookincubator/Glean/blob/master/.github/workflows/ci.yml) script.
 
@@ -36,8 +36,9 @@ that we use for building the base image for CI).
 sudo apt-get install \
     g++ \
     cmake \
+    ninja-build \
     bison flex \
-    git cmake \
+    git \
     libzstd-dev \
     libboost-all-dev \
     libevent-dev \
@@ -60,9 +61,13 @@ sudo apt-get install \
     libpcre3-dev \
     libmysqlclient-dev \
     libfftw3-dev \
-    librocksdb-dev \
     libxxhash-dev
 ```
+
+### Debian
+
+The package dependencies for Debian current are the same as above for Ubuntu,
+except you need `default-libmysqlclient-dev` instead of `libmysqlclient-dev`.
 
 ### Fedora
 
@@ -73,6 +78,7 @@ sudo dnf install \
     g++ \
     make \
     cmake \
+    ninja-build \
     binutils \
     bison flex \
     curl \
@@ -89,43 +95,44 @@ sudo dnf install \
     pcre-devel \
     community-mysql-devel \
     fftw-devel \
-    rocksdb-devel \
-    xxhash-devel
+    xxhash-devel \
+    snappy-devel \
+    lz4-devel
 ```
 
 ## Building
-
-:::warning
-
-The build process currently installs dependencies in
-`/usr/local/lib`. This isn't ideal; we're working on a more
-self-contained build process but it's not ready yet.
-
-:::
 
 Clone the repository:
 
 ```
 git clone https://github.com/facebookincubator/Glean.git
-cd glean
+cd Glean
 ```
 
-These are necessary so that the Glean build can find the dependencies
-that get installed in `/usr/local/lib`:
+### Build hsthrift and dependencies
+
+Glean depends on hsthrift, fbthrift, folly, rocksdb and some other core libraries.
+We need to set paths to these that the Glean build can find the thrift compiler
+and associated libraries:
 
 ```
-export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
-export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+export LD_LIBRARY_PATH=$HOME/.hsthrift/lib:$HOME/.hsthrift/lib64:$LD_LIBRARY_PATH
+export PKG_CONFIG_PATH=$HOME/.hsthrift/lib/pkgconfig:$HOME/.hsthrift/lib64/pkgconfig
+export PATH=$PATH:$HOME/.hsthrift/bin
 ```
 
-Clone [hsthrift](https://github.com/facebookincubator/hsthrift) and
-install its dependencies:
+These will build with either gcc or clang as the base C and C++ compilers. We
+test with gcc-{9,10} and clang-{10,11,12}.
 
+Now clone [hsthrift](https://github.com/facebookincubator/hsthrift) and
+build and install its dependencies:
 ```
 ./install_deps.sh
 ```
 
-Build everything:
+### Build Glean
+
+Now you can build all the Glean parts:
 
 ```
 make
@@ -139,3 +146,15 @@ make test
 
 At this point you can `cabal install` to install the executables into
 `~/.cabal/bin`.
+
+### Tips for faster builds
+
+If you have 4 or more cores and at least 16G of ram, you can significantly speed up the build times by passing some flags to the build stages.
+On an 6 core machine with 16G of ram you might use, to save 50% or more of the build time.
+
+```
+./install_deps.sh --threads 6
+make EXTRA_GHC_OPTS='-j4 +RTS -A128m -n2m -RTS'
+```
+
+Using clang++-12 and clang-12 as the C and C++ compilers can shave another 25% off the build time, though is less well tested.

@@ -69,7 +69,7 @@ The shell shows results in JSON format. When you’re making Glean
 queries from code, the results will normally be decoded into native
 data types that you can manipulate directly in whatever language
 you’re using; for more details see [Thrift and
-JSON](../schema/thrift).
+JSON](../schema/thrift.md).
 
 Note that each fact has a unique `id`. This is how Glean identifies facts in its database. As a user you normally won’t have to worry about fact `id`s; you can think of them like memory addresses.
 
@@ -90,7 +90,7 @@ detail in [Query Efficiency](efficiency.md).
 
 :::
 
-What other kinds of patterns can we use? Well, the simplest pattern is the wildcard, “_”, which matches anything.
+What other kinds of patterns can we use? Well, the simplest patterns are the wildcard, “_”, which matches anything, and "never", which always fails to match.
 
 ```lang=angle
 facts> example.Class _
@@ -98,6 +98,8 @@ facts> example.Class _
 { "id": 1027, "key": { "name": "Goldfish", "line": 40 } }
 { "id": 1025, "key": { "name": "Lizard", "line": 20 } }
 { "id": 1024, "key": { "name": "Pet", "line": 10 } }
+facts> example.Class never
+(no results)
 ```
 
 We’ll introduce more kinds of pattern in the following sections. The full list of patterns can be found in [Angle Reference](reference.md).

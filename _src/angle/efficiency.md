@@ -17,7 +17,7 @@ We’ll cover each of these in the following sections.
 
 The order of fields in the schema matters a lot for efficiency. Glean indexes facts by a prefix of their keys, so if we know the prefix when searching for facts this will be a lot faster. Often this difference is absolutely crucial; the difference is between *O(log n)* and *O(n)*, so when the database is large this can be many orders of magnitude.
 
-For example, the `example.Parent` predicate we saw [earlier](guide#matching-nested-facts) is defined as
+For example, the `example.Parent` predicate we saw [earlier](./guide.md#matching-nested-facts) is defined as
 
 ```lang=angle
 predicate Parent :
@@ -130,14 +130,14 @@ Q where
 
 Generally speaking the statements are matched top-to-bottom. For each of the facts that match the first statement, bind the variables in the pattern and then proceed with the second statement, and so on.
 
-As written, this query works by *first* finding the parent of `Golfish` and *then* finding its parent, which is exactly what we want. This query will be efficient, because both stages are matching on the first field of the `example.Parent` predicate.
+As written, this query works by *first* finding the parent of `Goldfish` and *then* finding its parent, which is exactly what we want. This query will be efficient, because both stages are matching on the first field of the `example.Parent` predicate.
 
 If instead we swapped the order of the statements:
 
 ```lang=angle
 Q where
-    example.Parent { child = C, parent = Q }
-    example.Parent { child = { name = "Goldfish" }, parent = P };
+    example.Parent { child = P, parent = Q };
+    example.Parent { child = { name = "Goldfish" }, parent = P }
 ```
 
 The query still works, and means exactly the same thing, but it’s much less efficient. This query works as follows:
